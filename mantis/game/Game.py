@@ -2,23 +2,20 @@ from mantis.deck.Card import Card
 from mantis.deck.Color import Color
 from mantis.player.Player import Player
 from mantis.player.Style import Style
+
+import argparse
 import itertools
 import random
 
 class Game():
-
-    def __init__(self, num_players: int, humans: list[int] = [0]):
+    def __init__(self, players: list[Player]):
         # Create the players.
-        if num_players < 2 or num_players > 6:
+        if len(players) < 2 or len(players) > 6:
             raise Exception("You must have between 2 and 6 players.")
-        
-        self.players: list[Player] = []
-        for i in range(num_players):
-            self.players.append(Player(id=i))
-        
-        # Place the humans where they'd like to sit.
-        for human in humans:
-            self.players[human].is_computer = False
+        self.players = players
+
+        # If there are no human players, the game is played silently (no human input / printing).
+        self.play_silently = len([player for player in players if not player.is_computer]) == 0
 
         # Keep track of the current player.
         self.player_index = random.choice(range(len(self.players)))
@@ -51,6 +48,8 @@ class Game():
                 return choice
 
     def print_start_of_round(self, players: list[Player], player_index: int) -> None:
+        if self.play_silently:
+            return
         self.clear_screen()
         # Print the state of the game.
         for i in range(len(players)):
@@ -58,15 +57,17 @@ class Game():
         print("\n\n")
 
     def score(self, players: list[Player], player_index: int, card: Card):
-        print(f"  Player {player_index} chooses to score.")
-        print(f"  The card's color is {card.color}.")
-        input("\n  Press Enter to continue...")
+        if not self.play_silently:
+            print(f"  Player {player_index} chooses to score.")
+            print(f"  The card's color is {card.color}.")
+            input("\n  Press Enter to continue...")
         players[player_index].score(card)
 
     def steal(self, players: list[Player], stealer: int, stealee: int, card: Card):
-        print(f"  Player {stealer} chooses to steal from Player {stealee}.")
-        print(f"  The card's color is {card.color}.")
-        input("\n  Press Enter to continue...")
+        if not self.play_silently:
+            print(f"  Player {stealer} chooses to steal from Player {stealee}.")
+            print(f"  The card's color is {card.color}.")
+            input("\n  Press Enter to continue...")
         taken_cards = players[stealee].take_color(card.color)
         if taken_cards:
             # Give the cards to you if the steal-ee has them.
@@ -125,7 +126,7 @@ class Game():
         # Otherwise, the game continues.
         return []
 
-    def play(self):
+    def play(self) -> list[Player]:
         # Game loop.
         while True:
             self.player_index = (self.player_index + 1) % len(self.players)
@@ -134,17 +135,19 @@ class Game():
             # See if the game is over and exit accordingly.
             winners = self.get_winners(self.players, self.deck)
             if winners:
-                input(f" Players ({",".join([player.id for player in winners])}) win!")
-                break
+                if not self.play_silently:
+                    input(f" Players ({",".join([str(player.id) for player in winners])}) win!")
+                return winners
 
             # The top card is always (1) scored or (2) stolen each round.
             top_card: Card = self.deck.pop()
-            print(f"Cards left: {len(self.deck)}, The deck shows: {top_card.back}")
+            if not self.play_silently:
+                print(f"Cards left: {len(self.deck)}, The deck shows: {top_card.back}")
             if self.players[self.player_index].is_computer:
                 self.make_computer_play(self.players, self.player_index, top_card)
                 continue
 
-            # Player logic.
+            # Player logic. We don't need to guard for self.play_silently here, as that implies we have no human players.
             choice = self.get_input("  Do you want to score, or steal? ", "score", "steal")
             if choice == "score":
                 # Draw from the deck and score.
@@ -156,5 +159,30 @@ class Game():
                 self.steal(self.players, self.player_index, who, top_card)
 
 if __name__ == "__main__":
-    # TODO(johnsigg): Take in number of players as an argument on the command line.
-    Game(5).play()
+    g_desc = "Play a game of Mantis. Please see the README for more information on flags."
+    p_desc = "A string representation of a player."
+    parser = argparse.ArgumentParser(description=g_desc)
+    parser.add_argument('players', metavar='P', type=str, nargs='+', help=p_desc)
+    args = parser.parse_args()
+
+    def create_player(rep: str, id: int) -> Player:
+        l_rep = rep.lower()
+        if l_rep == "h":
+            return Player(is_computer=False, id=id)
+        
+        computer_player = Player(id=id)
+        style = l_rep.split('-')[-1]
+        if style == "r":
+            computer_player.style = Style.RANDOM
+        elif style == "s":
+            computer_player.style = Style.SCORE
+        else:
+            raise Exception(f"Unknown style: {style}")
+        return computer_player
+
+    players = []
+    for i, s_player in enumerate(args.players):
+        # TODO(johnsigg): Support IDs (e.g. names?) besides 0-N?
+        players.append(create_player(s_player, i))
+
+    Game(players).play()
