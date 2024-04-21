@@ -11,7 +11,8 @@ An implementation of the card game, [Mantis](https://www.explodingkittens.com/pr
 Win the game by:
 - Scoring 10 points before any of your opponents
 - Having the most points when the deck runs out of cards
-  - `TODO(johnsigg) update the tie scenarios`
+  - If two players tie, then break ties by number of cards in player `tank`s.
+    - If two players have an equal number of cards in their tank, they both win :)
 
 ## Constraints
 - A deck of 105 unique cards
