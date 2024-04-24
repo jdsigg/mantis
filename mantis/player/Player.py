@@ -1,6 +1,6 @@
-from mantis.deck.Card import Card
-from mantis.player.Tank import Tank
-from mantis.player.Style import Style
+from mantis.deck.card import Card
+from mantis.player.tank import Tank
+from mantis.player.style import Style
 
 class Player():
     def __init__(self, id: int, is_computer: bool = True, style = Style.RANDOM):

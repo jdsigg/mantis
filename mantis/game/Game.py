@@ -1,7 +1,7 @@
-from mantis.deck.Card import Card
-from mantis.deck.Color import Color
-from mantis.player.Player import Player
-from mantis.player.Style import Style
+from mantis.deck.card import Card
+from mantis.deck.color import Color
+from mantis.player.player import Player
+from mantis.player.style import Style
 
 import argparse
 import itertools

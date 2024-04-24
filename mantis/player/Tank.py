@@ -1,5 +1,5 @@
-from mantis.deck.Card import Card
-from mantis.deck.Color import Color
+from mantis.deck.card import Card
+from mantis.deck.color import Color
 import random
 
 class Tank:

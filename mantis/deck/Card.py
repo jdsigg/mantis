@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from mantis.deck.Color import Color
+from mantis.deck.color import Color
 
 @dataclass
 class Card():
