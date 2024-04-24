@@ -198,7 +198,6 @@ class Game():
             # The top card is always (1) scored or (2) stolen each round.
             top_card: Card = self.deck.pop()
             if not self.play_silently:
-                print(f"*** DEBUG *** {top_card.color}")
                 print(f"Cards left: {len(self.deck)}, The deck shows: {top_card.back}")
             if self.players[self.player_index].is_computer:
                 self.make_computer_play(self.players, self.player_index, top_card)
