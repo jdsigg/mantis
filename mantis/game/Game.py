@@ -7,6 +7,8 @@ import argparse
 import itertools
 import random
 
+from collections import Counter
+
 class Game():
     def __init__(self, players: list[Player]):
         # Create the players.
@@ -95,6 +97,58 @@ class Game():
             return
         # 0 is score.
         self.score(players, player_index, card)
+    
+    def make_value_play(self, players: list[Player], player_index: int, card: Card):
+        # The following scenarios can happen:
+        #   You can score:
+        #       - If you score successfully, you get 1 + <matching cards in tank> towards your score.
+        #       - If you score and miss, you still get 1 card in your tank.
+        #   You can steal:
+        #       - If you steal successfully, you get 1 + <matching cards in stealee's tank> in your tank.
+        #       - If you steal unsuccessfully, you give your opponent a card and this does not benefit you. 
+        # This method assumes scoring and adding cards to your tank are EQUAL in value.        
+
+        available_colors: list[Card] = card.back
+        expected_values = []
+        for ind, player in enumerate(players):
+            total = 0
+            tank_colors_to_counts = Counter([p_card.color for p_card in player.tank.cards])
+            if ind == player_index:
+                # We are trying to score
+                for color in available_colors:
+                    if color in tank_colors_to_counts:
+                        total += tank_colors_to_counts[color]
+                # Assume we gain value from obtaining one of the three options.
+                total += 3
+            else:
+                # We are trying to steal
+                for color in available_colors:
+                    if color in tank_colors_to_counts:
+                        # We gain the card we steal plus all matching cards.
+                        total += 1 + tank_colors_to_counts[color]
+            expected_values.append(total)
+        # Find the highest score.
+        v_max = max(expected_values)
+        matching_indices = [i for i, v in enumerate(expected_values) if v == v_max]
+        # The player has, or is tied for, the highest expected value.
+        # Always prefer to score.
+        if player_index in matching_indices:
+            self.score(players, player_index, card)
+            return
+        
+        # Otherwise, we are definitely stealing.
+        # If there is a clear leader, steal from them.
+        if len(matching_indices) == 1:
+            self.steal(players, player_index, matching_indices[0], card)
+            return
+
+        # If there are multiple leaders, steal from whoever has the most cards in their tank.
+        tanks = [players[i].tank.size() for i in matching_indices]
+        t_max = max(tanks)
+        matching_tanks = [i for i in matching_indices if players[i].tank.size() == t_max]
+        # Choose randomly if two players have the same score and size tank.
+        # Choosing randomly is a no-op if there is only one choice.
+        self.steal(players, player_index, random.choice(matching_tanks), card)
 
     def make_computer_play(self, players: list[Player], player_index: int, card: Card):
         # TODO(johnsigg): Implement more computer play styles.
@@ -103,6 +157,8 @@ class Game():
             self.make_random_play(players, player_index, card)
         elif player.style == Style.SCORE:
             self.score(players, player_index, card)
+        elif player.style == Style.VALUE:
+            self.make_value_play(players, player_index, card)
 
     def get_winners(self, players: list[Player], deck: list[Card]) -> list[Player]:
         winning_score = 15 if len(players) == 2 else 10
@@ -142,6 +198,7 @@ class Game():
             # The top card is always (1) scored or (2) stolen each round.
             top_card: Card = self.deck.pop()
             if not self.play_silently:
+                print(f"*** DEBUG *** {top_card.color}")
                 print(f"Cards left: {len(self.deck)}, The deck shows: {top_card.back}")
             if self.players[self.player_index].is_computer:
                 self.make_computer_play(self.players, self.player_index, top_card)
@@ -176,6 +233,8 @@ if __name__ == "__main__":
             computer_player.style = Style.RANDOM
         elif style == "s":
             computer_player.style = Style.SCORE
+        elif style == "v":
+            computer_player.style = Style.VALUE
         else:
             raise Exception(f"Unknown style: {style}")
         return computer_player

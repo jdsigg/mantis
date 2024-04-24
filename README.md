@@ -2,7 +2,7 @@
 An implementation of the card game, [Mantis](https://www.explodingkittens.com/products/mantis), created by Exploding Kittens.
 
 ## Project Setup
-1. Install and set up [Poetry](https://python-poetry.org/)
+1. Install and set up [Poetry](https://python-poetry.org/).
 2. Clone this repo.
 3. From the repo's root, run `poetry install`.
 4. See the [game's README](./mantis/game/README.md) for instructions on how to play!

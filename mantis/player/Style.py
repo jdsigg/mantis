@@ -8,4 +8,6 @@ class Style(Enum):
     RANDOM = 0
     # No matter what, the player will always choose to score.
     SCORE = 1
+    # Calculates the expected value from the options presented to the player.
+    VALUE = 2
     # TODO(johnsigg) add more game modes.
