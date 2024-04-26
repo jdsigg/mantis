@@ -97,8 +97,16 @@ class Game():
             return
         # 0 is score.
         self.score(players, player_index, card)
-    
+
     def make_value_play(self, players: list[Player], player_index: int, card: Card):
+        self.make_value_play_base(players, player_index, card, card.back)
+        pass
+
+    def make_value_plus_play(self, players: list[Player], player_index: int, card: Card):
+        self.make_value_play_base(players, player_index, card, [card.color])
+        pass
+    
+    def make_value_play_base(self, players: list[Player], player_index: int, card: Card, available_colors: list[Card]):
         # The following scenarios can happen:
         #   You can score:
         #       - If you score successfully, you get 1 + <matching cards in tank> towards your score.
@@ -108,7 +116,6 @@ class Game():
         #       - If you steal unsuccessfully, you give your opponent a card and this does not benefit you. 
         # This method assumes scoring and adding cards to your tank are EQUAL in value.        
 
-        available_colors: list[Card] = card.back
         expected_values = []
         for ind, player in enumerate(players):
             total = 0
@@ -119,7 +126,7 @@ class Game():
                     if color in tank_colors_to_counts:
                         total += tank_colors_to_counts[color]
                 # Assume we gain value from obtaining one of the three options.
-                total += 3
+                total += len(available_colors)
             else:
                 # We are trying to steal
                 for color in available_colors:
@@ -159,6 +166,8 @@ class Game():
             self.score(players, player_index, card)
         elif player.style == Style.VALUE:
             self.make_value_play(players, player_index, card)
+        elif player.style == Style.VALUE_PLUS:
+            self.make_value_plus_play(players, player_index, card)
 
     def get_winners(self, players: list[Player], deck: list[Card]) -> list[Player]:
         winning_score = 15 if len(players) == 2 else 10
@@ -211,8 +220,11 @@ class Game():
             else:
                 # Steal from another player. Map to strings for input matching.
                 options = list(map(str, self.get_other_players(self.players, self.player_index)))
-                who = int(self.get_input(f"  Who do you want to steal from? ({', '.join(options)}) ", *options))
-                self.steal(self.players, self.player_index, who, top_card)
+                if len(options) == 1:
+                    self.steal(self.players, self.player_index, int(options[0]), top_card)
+                else:
+                    who = int(self.get_input(f"  Who do you want to steal from? ({', '.join(options)}) ", *options))
+                    self.steal(self.players, self.player_index, who, top_card)
 
 if __name__ == "__main__":
     g_desc = "Play a game of Mantis. Please see the README for more information on flags."
@@ -234,6 +246,8 @@ if __name__ == "__main__":
             computer_player.style = Style.SCORE
         elif style == "v":
             computer_player.style = Style.VALUE
+        elif style == "v+":
+            computer_player.style = Style.VALUE_PLUS
         else:
             raise Exception(f"Unknown style: {style}")
         return computer_player

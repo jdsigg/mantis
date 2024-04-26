@@ -10,4 +10,6 @@ class Style(Enum):
     SCORE = 1
     # Calculates the expected value from the options presented to the player.
     VALUE = 2
+    # VALUE, but only the card's true value is considered.
+    VALUE_PLUS = 3
     # TODO(johnsigg) add more game modes.

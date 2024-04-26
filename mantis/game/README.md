@@ -16,6 +16,8 @@ Computers are represented as `[C/c]-<style>`. The computer styles are as such:
 
 - `R/r` (Random): Every decision that can be made is made randomly.
 - `S/s` (Score): The player will always try to score.
+- `V/v` (Value): The player considers all possible choices and considers the best value play.
+- `V+/v+` (Value+): Value mode, but the player only considers the top card's true value.
 
 ## Examples
 
